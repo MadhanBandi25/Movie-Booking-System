@@ -1,0 +1,26 @@
+package com.booking.movieticket.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TheatreResponse {
+
+    private long  id;
+    private String name;
+    private String address;
+
+    private Long cityId;
+    private String cityName;
+
+    private Boolean active;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+}
