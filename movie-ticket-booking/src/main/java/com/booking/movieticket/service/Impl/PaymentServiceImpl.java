@@ -184,12 +184,9 @@ public class PaymentServiceImpl implements PaymentService {
         response.setPaymentStatus(payment.getStatus());
         response.setCreatedAt(payment.getCreatedAt());
 
-        response.setTheatreName(
-                booking.getShow().getScreen().getTheatre().getName()
-        );
-        response.setScreenName(
-                booking.getShow().getScreen().getName()
-        );
+        response.setTheatreName(booking.getShow().getScreen().getTheatre().getName());
+        response.setTheatreAddress(booking.getShow().getScreen().getTheatre().getAddress());
+        response.setScreenName(booking.getShow().getScreen().getName());
         response.setSeats(seatNumbers);
         response.setShowDate(booking.getShow().getShowDate());
         response.setShowTime(booking.getShow().getShowTime());

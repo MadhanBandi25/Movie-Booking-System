@@ -23,14 +23,14 @@ public class NotificationServiceImpl implements NotificationService {
 
         String emailBody =
 
-                        "Hello " + booking.getUser().getName() + " 👋,\n\n" +
+                "Hello " + booking.getUser().getName() + " 👋,\n\n" +
                         "Your movie ticket has been CONFIRMED!\n\n" +
                         "🎟 Booking Number : " + booking.getBookingNumber() + "\n" +
                         "🎬 Movie          : " + booking.getShow().getMovie().getTitle() + "\n" +
                         "🏢 Theatre        : " + booking.getShow().getScreen().getTheatre().getName() + "\n" +
+                        "📍 Address        : " + booking.getShow().getScreen().getTheatre().getAddress() + "\n" +   // ✅ ADDED
                         "🖥 Screen         : " + booking.getShow().getScreen().getName() + "\n" +
-                        "📅 Date & Time    : " + booking.getShow().getShowDate() + ", " +
-                        booking.getShow().getShowTime() + "\n" +
+                        "📅 Date & Time    : " + booking.getShow().getShowDate() + ", " + booking.getShow().getShowTime() + "\n" +
                         "💺 Seats          : " + String.join(", ", seats) + "\n\n" +
                         "Please arrive 15 minutes early.\n" +
                         "Show this email at the theatre entrance.\n\n" +
@@ -53,26 +53,22 @@ public class NotificationServiceImpl implements NotificationService {
 
                         "BOOKING CANCELLED\n" +
 
-                        "Hello " + booking.getUser().getName() + " 👋,\n\n" +
-                        "Your movie ticket has been CANCELLED successfully.\n\n" +
-                        "🎟 Booking Number : " + booking.getBookingNumber() + "\n" +
-                        "🎬 Movie          : " + booking.getShow().getMovie().getTitle() + "\n" +
-                        "🏢 Theatre        : " + booking.getShow().getScreen().getTheatre().getName() + "\n" +
-                        "🖥 Screen         : " + booking.getShow().getScreen().getName() + "\n" +
-                        "📅 Date & Time    : " + booking.getShow().getShowDate() + ", " +
-                        booking.getShow().getShowTime() + "\n" +
-                        "💺 Seats          : " + String.join(", ", seats) + "\n\n" +
-                        "💰 Refund Information:\n" +
-                        "If applicable, your refund will be processed automatically\n" +
-                        "to your original payment method within 3–5 business days.\n\n" +
-                        "If this cancellation was unintentional,\n" +
-                        "you can book again anytime.\n\n" +
-                        "— Movie Ticket Booking Team";
+                                "Hello " + booking.getUser().getName() + " 👋,\n\n" +
+                                "Your movie ticket has been CANCELLED successfully.\n\n" +
+                                "🎟 Booking Number  :  " + booking.getBookingNumber() + "\n" +
+                                "🎬 Movie          :  " + booking.getShow().getMovie().getTitle() + "\n" +
+                                "🏢 Theatre        :  " + booking.getShow().getScreen().getTheatre().getName() + "\n" +
+                                "📍 Address        :  " + booking.getShow().getScreen().getTheatre().getAddress() + "\n" +
+                                "🖥 Screen          :  " + booking.getShow().getScreen().getName() + "\n" +
+                                "📅 Date & Time    :  " + booking.getShow().getShowDate() + ", " + booking.getShow().getShowTime() + "\n" +
+                                "💺 Seats          :  " + String.join(", ", seats) + "\n\n" +
+                                "💰 Refund Information:\n" +
+                                "If applicable, your refund will be processed automatically\n" +
+                                "to your original payment method within 3–5 business days.\n\n" +
+                                "If this cancellation was unintentional, you can book again anytime.\n\n" +
+                                "— Movie Ticket Booking Team";
 
-        String smsMessage =
-                "Ticket CANCELLED \n" +
-                        "Booking: " + booking.getBookingNumber() + "\n" +
-                        "Refund will be processed if applicable.";
+
 
         if (email != null) {
             emailService.sendEmail(email, subject, emailBody);

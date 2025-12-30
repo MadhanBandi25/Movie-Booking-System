@@ -21,6 +21,7 @@ public class PaymentResponse {
     private PaymentStatus paymentStatus;
 
     private String theatreName;
+    private String theatreAddress;
     private String screenName;
     private List<String> seats;
     private LocalDate showDate;
