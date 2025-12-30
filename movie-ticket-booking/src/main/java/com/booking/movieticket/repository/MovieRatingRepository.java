@@ -11,10 +11,12 @@ public interface MovieRatingRepository extends JpaRepository<MovieRating,Long> {
 
     Optional<MovieRating> findByMovie_IdAndUserId(Long movieId, Long userId);
 
+    boolean existsByMovie_IdAndUserId(Long movieId, Long userId);
+
     @Query("SELECT AVG(r.rating) FROM MovieRating r WHERE r.movie.id = :movieId")
     Double findAverageRating(Long movieId);
 
-    @Query("SELECT COUNT(r) FROM MovieRating r WHERE r.movie.id = :movieId")
+    //@Query("SELECT COUNT(r) FROM MovieRating r WHERE r.movie.id = :movieId")
     Long countByMovieId(Long movieId);
 
 }

@@ -81,6 +81,15 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    @ExceptionHandler(DuplicateRatingException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateRating(
+            DuplicateRatingException ex,
+            HttpServletRequest request) {
+
+        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedActionException exception,HttpServletRequest request){
         return buildError(HttpStatus.FORBIDDEN,
