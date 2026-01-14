@@ -169,11 +169,22 @@ public class MovieServiceImpl implements MovieService {
         response.setCast(movie.getCast());
         response.setPosterUrl(movie.getPosterUrl());
         response.setTrailerUrl(movie.getTrailerUrl());
-        response.setStatus(movie.getStatus());
+        response.setStatus(resolveCurrentStatus(movie));
         response.setAverageRating(avg == null ? 0.0 : avg);
         response.setTotalRatings(count);
         response.setCreatedAt(movie.getCreatedAt());
         response.setUpdatedAt(movie.getUpdatedAt());
         return response;
     }
+
+    private MovieStatus resolveCurrentStatus(Movie movie) {
+
+        // ARCHIVED must stay ARCHIVED forever
+        if (movie.getStatus() == MovieStatus.ARCHIVED) {
+            return MovieStatus.ARCHIVED;
+        }
+        // Recalculate based on today's date
+        return determineInitialStatus(movie.getReleaseDate());
+    }
+
 }
