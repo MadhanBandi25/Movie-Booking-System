@@ -15,9 +15,9 @@ A comprehensive **Spring Boot REST API** for a movie ticket booking system with 
 ## 📋 Table of Contents
 
 - [Features](#-features)
-- [Technologies Used](#technologies-used)
-- [System Architecture](#system-architecture)
-- [Configuration](#configuration)
+- [Technologies Used](#-technologies-used)
+- [System Architecture](#-system-architecture)
+- [Configuration](#-configuration)
 - [API Documentation](#-api-documentation)
 - [Testing Guide](#-testing-guide)
 - [Module Details](#-module-details)
@@ -49,7 +49,6 @@ A comprehensive **Spring Boot REST API** for a movie ticket booking system with 
 ---
 
 ## 🛠️ Technologies Used
-
 
 ### Backend Framework
 - **Java 17** - Programming language
