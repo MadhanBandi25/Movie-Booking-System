@@ -9,22 +9,9 @@
 > - Cross-reference with application logs during startup
 
 A comprehensive **Spring Boot REST API** for a movie ticket booking system with complete functionality including user management, movie catalog, theatre management, show scheduling, seat booking, payment processing, and ticket verification.
+ 
 
----
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Technologies Used](#-technologies-used)
-- [System Architecture](#-system-architecture)
-- [Configuration](#-configuration)
-- [API Documentation](#-api-documentation)
-- [Testing Guide](#-testing-guide)
-- [Module Details](#-module-details)
-- [Business Rules](#-business-rules)
-- [Scheduled Jobs](#-scheduled-jobs)
-- [Error Handling](#-error-handling)
-
+ 
 ---
 
 ## 🚀 Features
@@ -189,25 +176,6 @@ City ──> Theatre ──> Screen ─┴──> Seat
 Movie ────────────────────────┘
 ```
 
-### Sample Data Script
-
-```sql
--- Insert Sample City
-INSERT INTO cities (name, state, country, zip_code, active) 
-VALUES ('Mumbai', 'Maharashtra', 'India', '400001', true);
-
--- Insert Sample Movie
-INSERT INTO movies (title, description, duration_minutes, genre, language, 
-                   release_date, director, rating, status, active) 
-VALUES ('Inception', 'A thief who steals corporate secrets', 148, 
-        'Sci-Fi', 'English', '2024-12-25', 'Christopher Nolan', 
-        8.8, 'NOW_SHOWING', true);
-
--- Insert Sample User
-INSERT INTO users (name, email, phone, password, role, active) 
-VALUES ('John Doe', 'john@example.com', '9876543210', 
-        'password123', 'CUSTOMER', true);
-```
 
 ---
 
@@ -574,25 +542,23 @@ movie-ticket-booking/
 │
 ├── src/main/java/com/example/movieticketbooking/
 │   │
-│   ├── controller/          # REST Controllers (11 controllers)
-│   ├── service/             # Service Interfaces (12 services)
-│   ├── service/impl/        # Service Implementations
-│   ├── repository/          # JPA Repositories (12 repositories)
-│   ├── entity/              # JPA Entities (12 entities)
+│   ├── controller/           
+│   ├── service/              
+│   ├── service/impl/         
+│   ├── repository/          
+│   ├── entity/              
 │   ├── dto/
-│   │   ├── request/         # Request DTOs
-│   │   └── response/        # Response DTOs
-│   ├── enums/               # Enumerations (8 enums)
-│   ├── exception/           # Custom Exceptions (8 exceptions)
-│   ├── scheduler/           # Scheduled Jobs (3 jobs)
-│   ├── config/              # Configuration Classes (4 configs)
-│   ├── util/                # Utility Classes (4 utilities)
-│   └── constants/           # Constants (3 constant classes)
+│   │   ├── request/          
+│   │   └── response/         
+│   ├── enums/               
+│   ├── exception/           
+│   ├── scheduler/           
+│   ├── config/                             
+│            
 │
 └── src/main/resources/
     ├── application.yml      # Application configuration
-    └── static/
-        └── qr-codes/        # Generated QR codes storage
+    └── 
 ```
 
 ### Key Modules
@@ -829,17 +795,5 @@ Solution:
 - [ ] Analytics & Reports
 - [ ] Multi-language Support
 - [ ] Dark Mode UI
-
----
-    
-## 👨‍💻 Author
-
-**Madhan B**  
-Backend Software Developer  
-🔧 Java | Spring Boot | REST APIs | MySQL  
-
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=flat&logo=github)](https://github.com/MadhanBandi25)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/madhanbandi25)
-[![Email](https://img.shields.io/badge/Email-Contact-red?style=flat&logo=gmail)](mailto:madhannn25@gmail.com)
 
 ---
