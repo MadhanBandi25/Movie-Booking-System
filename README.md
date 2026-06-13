@@ -1,799 +1,818 @@
-# 🎬 Movie Ticket Booking System - Backend API
+ # 🎬 Movie Ticket Booking System · Backend
 
-> **⚠️ IMPORTANT NOTICE - API ENDPOINT VERIFICATION**
-> 
-> This README follows standardized REST conventions. Please verify endpoint paths match your implementation before testing:
-> - Check actual Controller mappings in your code
-> - Verify DTO field names and enum types
-> - Test endpoints using Postman before production
-> - Cross-reference with application logs during startup
-
-A comprehensive **Spring Boot REST API** for a movie ticket booking system with complete functionality including user management, movie catalog, theatre management, show scheduling, seat booking, payment processing, and ticket verification.
- 
-
- 
----
-
-## 🚀 Features
-
-### Core Functionality
-- ✅ **User Management** - Registration, authentication, role-based access
-- ✅ **City/Location Management** - Multi-city support
-- ✅ **Movie Catalog** - Complete movie database with search and filters
-- ✅ **Theatre Management** - Multiple theatres with screen management
-- ✅ **Show Scheduling** - Flexible show time management
-- ✅ **Seat Management** - Dynamic seat layouts with bulk creation
-- ✅ **Smart Booking System** - Temporary seat locking (10 minutes)
-- ✅ **Payment Processing** - Multiple payment methods support
-
-### Advanced Features
-- 🎯 **Dynamic Pricing** - Based on seat type, day, and show time
-- 🔒 **Seat Locking Mechanism** - Prevents double booking
-- ⏰ **Auto-unlock Expired Locks** - Scheduled cleanup jobs
-- 🔄 **Show Status Management** - Auto-completion of shows
-- 📊 **Real-time Availability** - Live seat availability tracking
-
-
-## 🛠️ Technologies Used
-
-### Backend Framework
-- **Java 17** - Programming language
-- **Spring Boot 3.2.0** - Application framework
-- **Spring Data JPA** - Data persistence
-- **Hibernate** - ORM framework
-- **Maven** - Dependency management
-
-### Database
-- **MySQL 8.0** - Relational database
-
-### Libraries & Tools
-- **Lombok** - Reduce boilerplate code
-- **ModelMapper** - Object mapping
-- **Spring Validation** - Request validation
-- **Spring Scheduling** - Background jobs
+> A **Spring Boot REST API** for online movie ticket booking — manage cities, theatres, screens, seats, movies, shows, seat locking, bookings, payments, ratings, and email notifications.
 
 ---
 
-## 🏗️ System Architecture
+## 📋 Table of Contents
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Client Layer                            │
-│  (Web Browser / Mobile App / Third-party Integration)       │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  REST API Layer                             │
-│  (Controllers - Request/Response Handling)                  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Service Layer                              │
-│  (Business Logic - Validation, Processing)                  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Repository Layer                           │
-│  (Data Access - JPA Repositories)                           │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Database Layer                             │
-│  (MySQL - 12 Tables)                                        │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│              Background Services (Parallel)                 │
-│  - Seat Lock Cleanup (Every 5 min)                          │                          │
-│  - Show Status Update (Every hour)                          │
-└─────────────────────────────────────────────────────────────┘
-```
+* [Tech Stack](#-tech-stack)
+* [Features](#-features)
+* [System Design](#-system-design)
+* [Project Structure](#-project-structure)
+* [Entity Relationship Overview](#-entity-relationship-overview)
+* [API Endpoints](#-api-endpoints)
+* [Setup & Installation](#-setup--installation)
+* [Environment Configuration](#-environment-configuration)
+* [Running the Application](#-running-the-application)
+* [Error Handling](#-error-handling)
+* [Security Note](#-security-note)
 
 ---
 
+## 🛠 Tech Stack
 
-### Installation Steps
+| Layer | Technology |
+|-------|-----------|
+| Language | Java 17 |
+| Framework | Spring Boot 3.x |
+| Database | MySQL 8.x |
+| ORM | Spring Data JPA / Hibernate |
+| Mapping | ModelMapper |
+| Email | Spring Mail (Gmail SMTP) |
+| Async | Spring `@Async` (AsyncConfig) |
+| Scheduling | Spring `@Scheduled` (seat lock & show status schedulers) |
+| Validation | Jakarta Bean Validation |
+| Build Tool | Maven |
+| Dev Tools | Lombok, Spring DevTools |
 
-1. **Clone the Repository**
-```bash
-git clone https://github.com/yourusername/movie-ticket-booking.git
-cd movie-ticket-booking
-```
-
-2. **Create MySQL Database**
-```sql
-CREATE DATABASE movie_booking_db;
-```
-
-3. **Configure Database Connection**
-
-Edit `src/main/resources/application.yml`:
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/movie_booking_db
-    username: your_mysql_username
-    password: your_mysql_password
-```
-
-4. **Build the Project**
-```bash
-mvn clean install
-```
-
-5. **Run the Application**
-```bash
-mvn spring-boot:run
-```
-
-6. **Verify Installation**
-
-The application will start on: `http://localhost:8080/api`
-
+> ⚠️ No Spring Security / JWT module is present — all endpoints are currently **unauthenticated**. See [Security Note](#-security-note).
 
 ---
 
-## 💾 Database Setup
+## ✨ Features
 
-### Database Schema
-
-The system uses **12 interconnected tables**:
-
-```sql
--- Core Tables
-users                  -- User accounts
-cities                 -- City/location data
-movies                 -- Movie catalog
-theatres               -- Theatre information
-screens                -- Screen details per theatre
-seats                  -- Seat layout per screen
-
--- Operational Tables
-shows                  -- Show scheduling
-show_seats             -- Show-specific seat availability (CRITICAL)
-bookings               -- Booking records
-booking_seats          -- Booking-seat mapping (CRITICAL)
-payments               -- Payment transactions
-```
-
-### Entity Relationships
-
-```
-User ─────┐
-          │
-          ├──> Booking ──> Payment
-          │         │
-          │         └──> BookingSeat
-          │                   │
-City ──> Theatre ──> Screen ─┴──> Seat
-                       │           │
-                       └──> Show ──┴──> ShowSeat
-                              │
-Movie ────────────────────────┘
-```
-
+* **Users** – Create/manage users with roles (`CUSTOMER`, `ADMIN`, `THEATRE_OWNER`), activate/deactivate, filter by role/status
+* **Cities** – Manage cities (state/country), activate/deactivate, search by name/state/country
+* **Theatres** – Manage theatres per city, search, activate/deactivate, paginated active-theatre listing by city
+* **Screens** – Manage screens per theatre, search by city/theatre, activate/deactivate
+* **Seats** – Add seats individually or in bulk, bulk-update, filter by screen/type/row/status, activate/deactivate
+* **Movies** – Manage movie catalog with statuses (`COMING_SOON`, `NOW_SHOWING`, `ARCHIVED`), search, filter by language
+* **Movie Ratings** – Add and view user ratings/reviews per movie (with duplicate-rating prevention)
+* **Shows** – Schedule shows (movie + screen + date/time + base price), filter by upcoming/now-showing/date, cancel/complete
+* **Show Seats** – Initialize seat layout for a show, view seat layout & availability, lock/unlock seats, book seats
+* **Bookings** – Create booking, confirm/cancel/fail with seat-status transitions
+* **Payments** – Make payment for booking, cancel payment (with refund status)
+* **Notifications / Email** – Automated email notifications (e.g., booking confirmation) via Gmail SMTP
+* **Schedulers** – Auto-expire seat locks (`SeatLockScheduler`) and auto-update show status (`ShowStatusScheduler`)
 
 ---
 
-## ⚙️ Configuration
+## 🏗 System Design
 
-### Application Properties
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                CLIENT (Browser / Postman)                       │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │  HTTP/REST (JSON)
+                            ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                   SPRING BOOT APPLICATION                         │
+│                   localhost:9988                                  │
+│                                                                   │
+│  ┌────────────────────┐        ┌────────────────────┐             │
+│  │   Controllers      │ ─────▶ │      Services      │             │
+│  │ /api-users         │        │   Business Logic   │             │
+│  │ /api-cities        │        │   (Impl package)   │             │
+│  │ /api-theatres      │        └────────┬───────────┘             │
+│  │ /api-screens       │                 │                         │
+│  │ /api-seats         │        ┌────────▼───────────┐             │
+│  │ /api-movies        │        │    Repositories    │             │
+│  │ /api-shows         │        │   (Spring Data)    │             │
+│  │ /api/show-seats    │        └────────┬───────────┘             │
+│  │ /api-bookings      │                 │                         │
+│  │ /api-payments      │                 │                         │
+│  └────────────────────┘                 │                         │
+│                                         │                         │
+│  ┌─────────────────────┐                │                         │
+│  │ Schedulers          │ ───────────────┘                         │
+│  │ SeatLockScheduler   │  (expire locked seats)                   │
+│  │ ShowStatusScheduler │  (auto update show status)               │
+│  └─────────────────────┘                                          │
+│                                                                   │
+└──────────────────────────────────────────────┬────────────────────┘
+                                               │
+                            ┌──────────────────▼──────────────────────┐
+                            │           MySQL Database                │
+                            │                                         │
+                            │ ┌──────┐ ┌──────────┐ ┌──────┐ ┌─────-┐ │
+                            │ │users │ │ theatres │ │movies│ │cities│ │
+                            │ └──────┘ └──────────┘ └──────┘ └──────┘ │
+                            │ ┌────────┐ ┌──────┐ ┌───────┐ ┌──────┐  │
+                            │ │screens │ │ seats│ │ shows │ │ratngs│  │
+                            │ └────────┘ └──────┘ └───────┘ └──────┘  │
+                            │ ┌────────────┐ ┌──────────┐ ┌────────┐  │
+                            │ │ show_seats │ │ bookings │ │payments│  │
+                            │ └────────────┘ └──────────┘ └────────┘  │
+                            └─────────────────────────────────────────┘
+                                               │
+                            ┌──────────────────▼──────────────────────┐
+                            │         Gmail SMTP Server               │
+                            │      (Booking confirmation emails)      │
+                            └─────────────────────────────────────────┘
+```
 
-Located in `src/main/resources/application.yml`:
+### Seat Lock → Booking → Payment Flow
 
-```yaml
-# Server Configuration
-server:
-  port: 8080
-  servlet:
-    context-path: /api
+```
+INITIALIZE SHOW SEATS         LOCK SEATS              CREATE BOOKING
+─────────────────────       ──────────────          ─────────────────
+POST /api/show-seats/    →   POST /api/show-seats/   →   POST /api-bookings
+   initialize/{showId}           lock                         │
+      │                          │                            ▼
+      ▼                          ▼                     Booking status: PENDING
+ShowSeat rows created      Seat status: LOCKED          Linked seats: BookingSeat
+for each seat (AVAILABLE)   (expires via                       │
+                             SeatLockScheduler)                ▼
+                                                          PAY OR CANCEL
+                                                  ┌──────────────┴───────────────┐
+                                                  ▼                              ▼
+                                       POST /api-payments              POST /api-bookings/
+                                       Seat status: BOOKED                {bookingNumber}/cancel
+                                       Booking status: CONFIRMED        Seat status: AVAILABLE
+                                       (via /confirm)                   Booking status: CANCELLED
+```
 
-# Database Configuration
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/movie_booking_db?createDatabaseIfNotExist=true
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: update  # Change to 'validate' in production
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
+### Seat Lock Expiry & Show Status Scheduler
 
-# Business Rules Configuration
-app:
-  seat-lock-duration: 10          # Minutes
-  qr-expiry-duration: 30          # Minutes
-  qr-code-directory: src/main/resources/static/qr-codes/
+```
+SeatLockScheduler (runs periodically)
+  → Finds seats LOCKED beyond app.seat-lock-duration (minutes)
+  → Reverts ShowSeat status: LOCKED → AVAILABLE
+  → Marks related pending Booking as FAILED (if unpaid)
 
-# Scheduler Configuration
-scheduler:
-  seat-lock-cleanup-cron: "0 */5 * * * ?"     # Every 5 minutes
-  qr-expiry-cleanup-cron: "0 */10 * * * ?"    # Every 10 minutes
-  show-status-update-cron: "0 0 * * * ?"      # Every hour
+ShowStatusScheduler (runs periodically)
+  → ACTIVE shows past showDate/showTime → RUNNING
+  → RUNNING shows past duration → COMPLETED
 ```
 
 ---
 
-## 📚 API Documentation
+## 📁 Project Structure
 
-### Base URL
 ```
-http://localhost:8080/api
-```
-
-### API Endpoints Overview
-
-#### 👤 User Management
-```http
-POST   /users                    # Create user
-GET    /users                    # Get all users
-GET    /users/{id}               # Get user by ID
-GET    /users/email/{email}      # Get user by email
-GET    /users/role/{role}        # Get users by role
-PUT    /users/{id}               # Update user
-DELETE /users/{id}               # Delete user
-PATCH  /users/{id}/activate      # Activate user
-PATCH  /users/{id}/deactivate    # Deactivate user
-```
-
-#### 🏙️ City Management
-```http
-POST   /cities                   # Create city
-GET    /cities                   # Get all cities
-GET    /cities/{id}              # Get city by ID
-GET    /cities/search?name=      # Search cities
-GET    /cities/state/{state}     # Get cities by state
-PUT    /cities/{id}              # Update city
-DELETE /cities/{id}              # Delete city
-```
-
-#### 🎬 Movie Management
-```http
-POST   /movies                   # Create movie
-GET    /movies                   # Get all movies
-GET    /movies/{id}              # Get movie by ID
-GET    /movies/now-showing        # Get currently showing movies
-GET    /movies/search?title=     # Search movies
-GET    /movies/language/{lang}   # Get movies by language
-GET    /movies/genre/{genre}     # Get movies by genre
-PUT    /movies/{id}              # Update movie
-DELETE /movies/{id}              # Delete movie
-```
-
-#### 🏛️ Theatre Management
-```http
-POST   /theatres                 # Create theatre
-GET    /theatres                 # Get all theatres
-GET    /theatres/{id}            # Get theatre by ID
-GET    /theatres/city/{cityId}   # Get theatres by city
-GET    /theatres/search?name=    # Search theatres
-PUT    /theatres/{id}            # Update theatre
-DELETE /theatres/{id}            # Delete theatre
-```
-
-#### 🎭 Screen Management
-```http
-POST   /screens                  # Create screen
-GET    /screens                  # Get all screens
-GET    /screens/{id}             # Get screen by ID
-GET    /screens/theatre/{theatreId}  # Get screens by theatre
-PUT    /screens/{id}             # Update screen
-DELETE /screens/{id}             # Delete screen
-```
-
-#### 💺 Seat Management
-```http
-POST   /seats                    # Create single seat
-POST   /seats/bulk               # Create bulk seats (row-wise)
-GET    /seats                    # Get all seats
-GET    /seats/{id}               # Get seat by ID
-GET    /seats/screen/{screenId}  # Get seats by screen
-GET    /seats/screen/{screenId}/row/{row}  # Get seats by row
-PUT    /seats/{id}               # Update seat
-DELETE /seats/{id}               # Delete seat
-```
-
-#### 🎫 Show Management
-```http
-POST   /shows                    # Create show
-GET    /shows                    # Get all shows
-GET    /shows/{id}               # Get show by ID
-GET    /shows/{id}/details       # Get show with complete details
-GET    /shows/movie/{movieId}    # Get shows by movie
-GET    /shows/movie/{movieId}/city/{cityId}  # Get shows by movie & city
-GET    /shows/date/{date}        # Get shows by date
-PUT    /shows/{id}               # Update show
-DELETE /shows/{id}               # Delete show
-PATCH  /shows/{id}/cancel        # Cancel show
-```
-
-#### 🪑 ShowSeat Management
-```http
-POST   /show-seats/initialize/{showId}      # Initialize show seats
-GET    /show-seats/layout/{showId}          # Get seat layout
-POST   /show-seats/lock                     # Lock seats
-POST   /show-seats/unlock                   # Unlock seats
-GET    /show-seats/available-count/{showId} # Get available seats count
-```
-
-#### 📋 Booking Management
-```http
-POST   /bookings                 # Create booking
-GET    /bookings                 # Get all bookings
-GET    /bookings/{id}            # Get booking by ID
-GET    /bookings/{id}/details    # Get booking with full details
-GET    /bookings/number/{bookingNumber}         # Get booking by number
-GET    /bookings/number/{bookingNumber}/details # Get full details by number
-GET    /bookings/user/{userId}   # Get bookings by user
-PATCH  /bookings/{id}/confirm    # Confirm booking
-PATCH  /bookings/{id}/cancel     # Cancel booking
-```
-
-#### 💳 Payment Management
-```http
-POST   /payments/process         # Process payment
-GET    /payments/{id}            # Get payment by ID
-GET    /payments/transaction/{txnId}  # Get payment by transaction ID
-GET    /payments/booking/{bookingId}  # Get payment by booking
-GET    /payments/user/{userId}   # Get payments by user
-PATCH  /payments/{id}/status     # Update payment status
+movie-ticket-booking/
+│
+├── src/main/java/com/booking/movieticket/
+│   │
+│   ├── config/
+│   │   ├── AsyncConfig.java             # @Async executor config (for emails)
+│   │   ├── CorsConfig.java              # CORS configuration
+│   │   └── ModelMapperConfig.java       # ModelMapper bean
+│   │
+│   ├── controller/                      # REST API Controllers
+│   │   ├── UserController.java          # /api-users/**
+│   │   ├── CityController.java          # /api-cities/**
+│   │   ├── TheatreController.java       # /api-theatres/**
+│   │   ├── ScreenController.java        # /api-screens/**
+│   │   ├── SeatController.java          # /api-seats/**
+│   │   ├── MovieController.java         # /api-movies/**
+│   │   ├── MovieRatingController.java   # /api-movies/{movieId}/ratings
+│   │   ├── ShowController.java          # /api-shows/**
+│   │   ├── ShowSeatController.java      # /api/show-seats/**
+│   │   ├── BookingController.java       # /api-bookings/**
+│   │   └── PaymentController.java       # /api-payments/**
+│   │
+│   ├── service/ & service/Impl/         # Business logic interfaces & implementations
+│   │   ├── UserService(Impl)
+│   │   ├── CityService(Impl)
+│   │   ├── TheatreService(Impl)
+│   │   ├── ScreenService(Impl)
+│   │   ├── SeatService(Impl)
+│   │   ├── MovieService(Impl)
+│   │   ├── MovieRatingService(Impl)
+│   │   ├── ShowService(Impl)
+│   │   ├── ShowSeatService(Impl)
+│   │   ├── BookingService(Impl)
+│   │   ├── PaymentService(Impl)
+│   │   ├── NotificationService(Impl)
+│   │   └── EmailService (Impl)
+│   │
+│   ├── entity/                          # JPA Entities
+│   │   ├── User.java
+│   │   ├── City.java
+│   │   ├── Theatre.java
+│   │   ├── Screen.java
+│   │   ├── Seat.java
+│   │   ├── Movie.java
+│   │   ├── MovieRating.java
+│   │   ├── Show.java
+│   │   ├── ShowSeat.java
+│   │   ├── Booking.java
+│   │   ├── BookingSeat.java
+│   │   └── Payment.java
+│   │
+│   ├── entity/enums/                    # Enumerations
+│   │   ├── UserRole.java                # CUSTOMER, ADMIN, THEATRE_OWNER
+│   │   ├── MovieStatus.java             # COMING_SOON, NOW_SHOWING, ARCHIVED
+│   │   ├── ShowStatus.java              # ACTIVE, RUNNING, CANCELLED, COMPLETED
+│   │   ├── SeatType.java                # NORMAL, PREMIUM, VIP
+│   │   ├── ShowSeatStatus.java          # AVAILABLE, LOCKED, BOOKED
+│   │   ├── BookingStatus.java           # PENDING, CONFIRMED, CANCELLED, FAILED
+│   │   ├── PaymentMethod.java           # CARD, UPI, WALLET, NET_BANKING
+│   │   ├── PaymentStatus.java           # PENDING, SUCCESS, FAILED
+│   │   └── RefundStatus.java            # NOT_APPLICABLE, REFUNDED
+│   │
+│   ├── repository/                      # Spring Data JPA Repositories
+│   │   ├── UserRepository.java
+│   │   ├── CityRepository.java
+│   │   ├── TheatreRepository.java
+│   │   ├── ScreenRepository.java
+│   │   ├── SeatRepository.java
+│   │   ├── MovieRepository.java
+│   │   ├── MovieRatingRepository.java
+│   │   ├── ShowRepository.java
+│   │   ├── ShowSeatRepository.java
+│   │   ├── BookingRepository.java
+│   │   ├── BookingSeatRepository.java
+│   │   └── PaymentRepository.java
+│   │
+│   ├── dto/
+│   │   ├── request/                     # Incoming request bodies
+│   │   │   ├── UserRequest.java
+│   │   │   ├── CityRequest.java
+│   │   │   ├── TheatreRequest.java
+│   │   │   ├── ScreenRequest.java
+│   │   │   ├── SeatRequest.java
+│   │   │   ├── SeatBulkRequest.java
+│   │   │   ├── SeatBulkUpdateRequest.java
+│   │   │   ├── MovieRequest.java
+│   │   │   ├── MovieRatingRequest.java
+│   │   │   ├── ShowRequest.java
+│   │   │   ├── SeatLockRequest.java
+│   │   │   ├── BookingRequest.java
+│   │   │   └── PaymentRequest.java
+│   │   │
+│   │   └── response/                    # Outgoing response bodies
+│   │       ├── ApiResponse.java         # Generic wrapper response
+│   │       ├── UserResponse.java
+│   │       ├── CityResponse.java
+│   │       ├── TheatreResponse.java
+│   │       ├── ScreenResponse.java
+│   │       ├── SeatResponse.java
+│   │       ├── MovieResponse.java
+│   │       ├── MovieRatingResponse.java
+│   │       ├── ShowResponse.java
+│   │       ├── ShowSeatResponse.java
+│   │       ├── BookingResponse.java
+│   │       └── PaymentResponse.java
+│   │
+│   ├── exception/                       # Custom Exceptions
+│   │   ├── GlobalExceptionHandler.java  # @RestControllerAdvice
+│   │   ├── ErrorResponse.java
+│   │   ├── BusinessException.java
+│   │   ├── ResourceNotFoundException.java
+│   │   ├── DuplicateResourceException.java
+│   │   ├── DuplicateRatingException.java
+│   │   ├── InvalidRequestException.java
+│   │   ├── InvalidBookingException.java
+│   │   ├── SeatAlreadyBookedException.java
+│   │   ├── SeatNotAvailableException.java
+│   │   ├── ShowSeatAlreadyInitializedException.java
+│   │   ├── PaymentFailedException.java
+│   │   └── UnauthorizedActionException.java
+│   │
+│   ├── scheduler/
+│   │   ├── SeatLockScheduler.java       # Expires stale seat locks
+│   │   └── ShowStatusScheduler.java     # Auto-updates show status
+│   │
+│   └── MovieTicketBookingApplication.java  # Main entry point
+│
+├── src/main/resources/
+│   └── application.properties           # DB, mail, server port, seat-lock config
+│
+├── src/test/java/
+│   └── (test classes here)
+│
+└── pom.xml                              # Maven dependencies
 ```
 
 ---
 
-## 🧪 Testing Guide
+## 🗃 Entity Relationship Overview
 
-### Complete Booking Workflow (Postman)
+```
+┌──────────┐        ┌────────────┐        ┌───────────────┐
+│   CITY   │ 1   N  │  THEATRE   │ 1   N  │   SCREEN      │
+├──────────┤────────├────────────┤────────├───────────────┤
+│ name     │        │ name       │        │ name          │
+│ state    │        │ city_id FK │        │ theatre_id FK │
+│ country  │        │ active     │        │ active        │
+│ active   │        └────────────┘        └─────────┬─────┘
+└──────────┘                                        │ 1
+                                                    │ N
+┌────────────────┐                           ┌──────▼─────────┐
+│    MOVIE       │ 1        N                │     SEAT       │
+├────────────────┤────┐                      ├────────────────┤
+│ title          │    │                      │ screen_id FK   │
+│ language       │    │                      │ seatRow/number │
+│ status ENUM    │    │                      │ seatType ENUM  │◄── NORMAL|PREMIUM|VIP
+│ (COMING_SOON/  │    │                      │ active         │
+│ NOW_SHOWING/   │    │                      └────────┬───────┘
+│ ARCHIVED)      │    │                               │
+└──────┬─────────┘    │                               │
+       │ 1            │ N (ratings)                   │
+       │ N            ▼                               │
+┌──────▼──────────┐  ┌───────────────┐                │
+│     SHOW        │  │ MOVIE_RATING  │                │
+├─────────────────┤  ├───────────────┤                │
+│ movie_id FK     │  │ movie_id FK   │                │
+│ screen_id FK    │  │ user_id FK    │                │
+│ showDate/Time   │  │ rating, review│                │
+│ basePrice       │  └───────────────┘                │
+│ status ENUM     │◄── ACTIVE|RUNNING|CANCELLED|COMPLETED
+└──────┬──────────┘                                   │
+       │ 1                                            │
+       │ N                                            │
+┌──────▼───────────┐   1:1 per seat   ┌───────────────▼──┐
+│   SHOW_SEAT      │◄─────────────────│     SEAT (above) │
+├──────────────────┤                  └──────────────────┘
+│ show_id FK       │
+│ seat_id FK       │
+│ status ENUM      │◄── AVAILABLE|LOCKED|BOOKED
+│ price            │
+└──────┬───────────┘
+       │ N
+       │ 1
+┌──────▼──────────┐        ┌───────────────┐
+│  BOOKING_SEAT   │ N   1  │   BOOKING     │
+├─────────────────┤────────├───────────────┤
+│ show_seat_id FK │        │ bookingNumber │
+│ booking_id FK   │        │ user_id FK    │
+└─────────────────┘        │ show_id FK    │
+                           │ status ENUM   │◄── PENDING|CONFIRMED|CANCELLED|FAILED
+                           └──────┬────────┘
+                                  │ 1
+                                  │ 1
+                              ┌───▼────────────┐
+                              │    PAYMENT     │
+                              ├────────────────┤
+                              │ booking_id FK  │
+                              │ paymentMethod  │◄── CARD|UPI|WALLET|NET_BANKING
+                              │ status ENUM    │◄── PENDING|SUCCESS|FAILED
+                              │ refundStatus   │◄── NOT_APPLICABLE|REFUNDED
+                              └────────────────┘
 
-#### **Step 1: Create User**
+┌───────────┐
+│   USER    │
+├───────────┤
+│ name      │
+│ email     │
+│ phone     │
+│ role ENUM │◄── CUSTOMER|ADMIN|THEATRE_OWNER
+│ active    │
+└───────────┘
+```
+
+---
+
+## 🔌 API Endpoints
+
+> Base URL: `http://localhost:9988`
+
+### 👤 Users (`/api-users`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-users` | Create a new user |
+| GET | `/api-users/{id}` | Get user by ID |
+| GET | `/api-users` | Get all users |
+| GET | `/api-users/role/{role}` | Get users by role |
+| GET | `/api-users/active` | Get active users |
+| GET | `/api-users/inactive` | Get inactive users |
+| PUT | `/api-users/{id}` | Update user |
+| PUT | `/api-users/{id}/activate` | Activate user |
+| PUT | `/api-users/{id}/deactivate` | Deactivate user |
+| DELETE | `/api-users/{id}` | Delete user |
+
+**Example – Create User**
 ```http
-POST http://localhost:8080/api/users
+POST /api-users
 Content-Type: application/json
 
 {
-  "name": "John Doe",
-  "email": "john@example.com",
+  "name": "Madhan Kumar",
+  "email": "madhan@example.com",
   "phone": "9876543210",
   "role": "CUSTOMER"
 }
 ```
 
-#### **Step 2: Create City**
+---
+
+### 🌆 Cities (`/api-cities`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-cities` | Add a city |
+| GET | `/api-cities/{id}` | Get city by ID |
+| GET | `/api-cities` | Get all cities |
+| GET | `/api-cities/state/{state}` | Get cities by state |
+| GET | `/api-cities/country/{country}` | Get cities by country |
+| GET | `/api-cities/city/{cityName}` | Get city by name |
+| GET | `/api-cities/active` | Get active cities |
+| GET | `/api-cities/inactive` | Get inactive cities |
+| PUT | `/api-cities/{id}` | Update city |
+| PATCH | `/api-cities/{id}/activate` | Activate city |
+| PATCH | `/api-cities/{id}/deactivate` | Deactivate city |
+
+**Example – Add City**
 ```http
-POST http://localhost:8080/api/cities
+POST /api-cities
 Content-Type: application/json
 
 {
-  "name": "Mumbai",
-  "state": "Maharashtra",
-  "country": "India",
-  "zipCode": "400001"
+  "name": "Bengaluru",
+  "state": "Karnataka",
+  "country": "India"
 }
 ```
 
-#### **Step 3: Create Movie**
+---
+
+### 🏛 Theatres (`/api-theatres`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-theatres` | Add a theatre |
+| GET | `/api-theatres/{id}` | Get theatre by ID |
+| GET | `/api-theatres` | Get all theatres |
+| GET | `/api-theatres/search?name=` | Search theatres by name |
+| GET | `/api-theatres/city?cityId=` | Get theatres by city |
+| GET | `/api-theatres/active` | Get active theatres |
+| GET | `/api-theatres/inactive` | Get inactive theatres |
+| GET | `/api-theatres/city/{cityId}/active/paged` | Paginated active theatres in a city |
+| PUT | `/api-theatres/{id}` | Update theatre |
+| PATCH | `/api-theatres/{id}/activate` | Activate theatre |
+| PATCH | `/api-theatres/{id}/deactivate` | Deactivate theatre |
+| DELETE | `/api-theatres/{id}` | Delete theatre |
+
+**Example – Add Theatre**
 ```http
-POST http://localhost:8080/api/movies
+POST /api-theatres
 Content-Type: application/json
 
 {
-  "title": "Inception",
-  "description": "A thief who steals corporate secrets through dream-sharing technology",
-  "durationMinutes": 148,
-  "genre": "Sci-Fi",
-  "language": "English",
-  "releaseDate": "2024-12-25",
-  "director": "Christopher Nolan",
-  "cast": "Leonardo DiCaprio, Tom Hardy",
-  "rating": 8.8,
-  "status": "NOW_SHOWING"
-}
-```
-
-#### **Step 4: Create Theatre**
-```http
-POST http://localhost:8080/api/theatres
-Content-Type: application/json
-
-{
-  "name": "PVR Cinemas Phoenix",
-  "address": "Phoenix Marketcity, Lower Parel, Mumbai",
+  "name": "PVR Cinemas",
   "cityId": 1,
-  "phone": "9876543210",
-  "email": "pvr.phoenix@example.com",
-  "facilities": "Parking, Food Court, Wheelchair Access, 3D Screen"
+  "address": "Forum Mall, Koramangala"
 }
 ```
 
-#### **Step 5: Create Screen**
+---
+
+### 🎞 Screens (`/api-screens`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-screens` | Add a screen |
+| GET | `/api-screens/{id}` | Get screen by ID |
+| GET | `/api-screens` | Get all screens |
+| GET | `/api-screens/search?name=` | Search screens by name |
+| GET | `/api-screens/search-by-city?city=` | Search screens by city |
+| GET | `/api-screens/theatre/{id}` | Get screens by theatre |
+| GET | `/api-screens/theatre/{id}/active` | Get active screens by theatre |
+| GET | `/api-screens/active` | Get active screens |
+| GET | `/api-screens/inactive` | Get inactive screens |
+| PUT | `/api-screens/{id}` | Update screen |
+| PATCH | `/api-screens/{id}/activate` | Activate screen |
+| PATCH | `/api-screens/{id}/deactivate` | Deactivate screen |
+| DELETE | `/api-screens/{id}` | Delete screen |
+
+**Example – Add Screen**
 ```http
-POST http://localhost:8080/api/screens
+POST /api-screens
 Content-Type: application/json
 
 {
-  "name": "Screen 1 - Audi 1",
+  "name": "Screen 1",
   "theatreId": 1,
   "totalSeats": 100
 }
 ```
 
-#### **Step 6: Create Bulk Seats**
+---
+
+### 💺 Seats (`/api-seats`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-seats` | Add a single seat |
+| POST | `/api-seats/bulk` | Add seats in bulk |
+| GET | `/api-seats/{id}` | Get seat by ID |
+| GET | `/api-seats` | Get all seats |
+| GET | `/api-seats/screen/{screenId}` | Get seats by screen |
+| GET | `/api-seats/screen/{screenId}/active` | Get active seats by screen |
+| GET | `/api-seats/type/{seatType}` | Get seats by type |
+| GET | `/api-seats/screen/{screenId}/row/{seatRow}` | Get seats by screen & row |
+| GET | `/api-seats/active` | Get active seats |
+| GET | `/api-seats/inactive` | Get inactive seats |
+| PUT | `/api-seats/{id}` | Update seat |
+| PUT | `/api-seats/bulk-seats` | Bulk update seats |
+| PATCH | `/api-seats/{id}/activate` | Activate seat |
+| PATCH | `/api-seats/{id}/deactivate` | Deactivate seat |
+| DELETE | `/api-seats/{id}` | Delete seat |
+
+**Example – Add Seats in Bulk**
 ```http
-POST http://localhost:8080/api/seats/bulk
+POST /api-seats/bulk
 Content-Type: application/json
 
 {
   "screenId": 1,
-  "rowNumber": "A",
-  "startSeatNumber": 1,
-  "endSeatNumber": 10,
-  "seatType": "NORMAL",
-  "basePrice": 200.0
+  "seatRow": "A",
+  "seatNumbers": [1, 2, 3, 4, 5],
+  "seatType": "PREMIUM"
 }
 ```
 
-Repeat for rows B, C, D with different seat types:
-- Row A: NORMAL (₹200)
-- Row B: NORMAL (₹200)
-- Row C: PREMIUM (₹250)
-- Row D: VIP (₹350)
+---
 
-#### **Step 7: Create Show**
+### 🎥 Movies (`/api-movies`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-movies` | Add a movie |
+| GET | `/api-movies/{id}` | Get movie by ID |
+| GET | `/api-movies/now-showing` | Get now-showing movies |
+| GET | `/api-movies/coming-soon` | Get coming-soon movies |
+| GET | `/api-movies/archived` | Get archived movies |
+| GET | `/api-movies` | Get all movies |
+| GET | `/api-movies/search?title=` | Search movies by title |
+| GET | `/api-movies/language/{language}` | Get movies by language |
+| PUT | `/api-movies/{id}` | Update movie |
+| PUT | `/api-movies/{id}/archive` | Archive a movie |
+
+**Example – Add Movie**
 ```http
-POST http://localhost:8080/api/shows
+POST /api-movies
 Content-Type: application/json
 
 {
-  "movieId": 1,
-  "screenId": 1,
-  "showDate": "2024-12-25",
-  "showTime": "18:00:00",
-  "basePrice": 250.0,
-  "status": "ACTIVE"
+  "title": "Interstellar",
+  "language": "English",
+  "genre": "Sci-Fi",
+  "durationMinutes": 169,
+  "status": "NOW_SHOWING"
 }
 ```
 
-#### **Step 8: Initialize Show Seats**
-```http
-POST http://localhost:8080/api/show-seats/initialize/1
-```
+---
 
-#### **Step 9: View Seat Layout**
-```http
-GET http://localhost:8080/api/show-seats/layout/1
-```
+### ⭐ Movie Ratings (`/api-movies/{movieId}/ratings`)
 
-#### **Step 10: Lock Seats (Temporary Reservation)**
-```http
-POST http://localhost:8080/api/show-seats/lock
-Content-Type: application/json
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-movies/{movieId}/ratings` | Add a rating/review for a movie |
+| GET | `/api-movies/{movieId}/ratings` | Get ratings for a movie |
 
-{
-  "showId": 1,
-  "seatIds": [1, 2, 3],
-  "userId": 1
-}
-```
-
-#### **Step 11: Create Booking**
+**Example – Add Rating**
 ```http
-POST http://localhost:8080/api/bookings
+POST /api-movies/5/ratings
 Content-Type: application/json
 
 {
   "userId": 1,
-  "showId": 1,
-  "seatIds": [1, 2, 3]
+  "rating": 5,
+  "review": "Amazing visuals and story!"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Booking created successfully",
-  "data": {
-    "id": 1,
-    "bookingNumber": "BK12345678",
-    "userId": 1,
-    "userName": "John Doe",
-    "showId": 1,
-    "movieTitle": "Inception",
-    "theatreName": "PVR Cinemas Phoenix",
-    "totalSeats": 3,
-    "totalAmount": 750.0,
-    "status": "PENDING",
-    "createdAt": "2024-12-25T15:30:00"
-  }
-}
-```
+---
 
-#### **Step 12: Process Payment**
+### 🎬 Shows (`/api-shows`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-shows` | Schedule a show |
+| GET | `/api-shows/{id}` | Get show by ID |
+| GET | `/api-shows/now-upcoming` | Get upcoming shows |
+| GET | `/api-shows/now-showing` | Get currently running shows |
+| GET | `/api-shows` | Get all shows |
+| GET | `/api-shows/movie-name/{movieName}/date/{showDate}` | Get shows by movie name & date |
+| GET | `/api-shows/movie/{movieId}/date/{showDate}` | Get shows by movie ID & date |
+| PATCH | `/api-shows/{id}/cancel` | Cancel a show |
+| PATCH | `/api-shows/{id}/complete` | Mark a show as completed |
+
+**Example – Schedule Show**
 ```http
-POST http://localhost:8080/api/payments/process
+POST /api-shows
 Content-Type: application/json
 
 {
-  "bookingId": 1,
-  "amount": 750.0,
-  "paymentMethod": "CARD"
+  "movieId": 5,
+  "screenId": 1,
+  "showDate": "2026-06-15",
+  "showTime": "18:30:00",
+  "basePrice": 250
 }
 ```
 
 ---
 
-## 📦 Module Details
+### 🪑 Show Seats (`/api/show-seats`)
 
-### Module Structure
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/show-seats/initialize/{showId}` | Initialize seat layout for a show |
+| GET | `/api/show-seats/layout/{showId}` | Get full seat layout for a show |
+| GET | `/api/show-seats/available/{showId}` | Get available seats for a show |
+| POST | `/api/show-seats/lock` | Lock selected seats (temporary hold) |
+| POST | `/api/show-seats/unlock` | Unlock previously locked seats |
+| POST | `/api/show-seats/book` | Mark locked seats as booked |
 
-```
-movie-ticket-booking/
-│
-├── src/main/java/com/example/movieticketbooking/
-│   │
-│   ├── controller/           
-│   ├── service/              
-│   ├── service/impl/         
-│   ├── repository/          
-│   ├── entity/              
-│   ├── dto/
-│   │   ├── request/          
-│   │   └── response/         
-│   ├── enums/               
-│   ├── exception/           
-│   ├── scheduler/           
-│   ├── config/                             
-│            
-│
-└── src/main/resources/
-    ├── application.yml      # Application configuration
-    └── 
+**Example – Initialize Show Seats**
+```http
+POST /api/show-seats/initialize/10
 ```
 
-### Key Modules
+**Example – Lock Seats**
+```http
+POST /api/show-seats/lock
+Content-Type: application/json
 
-#### 1. **User Module**
-- User registration and management
-- Role-based access (CUSTOMER, ADMIN, THEATRE_OWNER)
-- Active/inactive status management
-
-#### 2. **Movie Module**
-- Movie catalog management
-- Search and filter functionality
-- Status tracking (NOW_SHOWING, COMING_SOON, ARCHIVED)
-
-#### 3. **ShowSeat Module** (Critical)
-- Show-specific seat availability
-- Seat locking mechanism
-- Prevents double booking
-- Auto-release expired locks
-
-#### 4. **Booking Module** (Critical)
-- Complete booking workflow
-- Booking-seat mapping
-- Confirm/cancel functionality
-
-#### 5. **Payment Module**
-- Payment processing simulation
-- Multiple payment methods
-- Transaction tracking
+{
+  "showId": 10,
+  "seatIds": [101, 102, 103],
+  "userId": 1
+}
+```
+> Locked seats auto-expire after `app.seat-lock-duration` minutes (configurable), reverted by `SeatLockScheduler`.
 
 ---
 
-## 📏 Business Rules
+### 📅 Bookings (`/api-bookings`)
 
-### 1. **Seat Locking Rules**
-- Seats are **locked for 10 minutes** when user starts booking
-- User must **complete payment within 10 minutes**
-- After 10 minutes, seats are **automatically released**
-- **Scheduler runs every 5 minutes** to clean up expired locks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-bookings` | Create a booking (status: PENDING) |
+| POST | `/api-bookings/{bookingNumber}/cancel` | Cancel a booking |
+| POST | `/api-bookings/{bookingNumber}/failed` | Mark a booking as failed |
+| POST | `/api-bookings/{bookingNumber}/confirm` | Confirm a booking (after payment) |
 
-### 2. **Dynamic Pricing Rules**
+**Example – Create Booking**
+```http
+POST /api-bookings
+Content-Type: application/json
 
-```java
-Base Price Calculation:
-─────────────────────
-Base Price = Show Base Price + Seat Type Surcharge + Time Surcharge
-
-Seat Type Surcharge:
-- NORMAL: ₹0
-- PREMIUM: ₹50
-- VIP: ₹100
-
-Time Surcharge:
-- Weekend (Sat/Sun): +₹50
-- Evening Show (after 5 PM): +₹30
-
-Example:
-Show Base Price: ₹200
-VIP Seat: ₹200 + ₹100 = ₹300
-Weekend Evening VIP: ₹200 + ₹100 + ₹50 + ₹30 = ₹380
+{
+  "showId": 10,
+  "userId": 1,
+  "seatIds": [101, 102, 103]
+}
 ```
-
-### 3. **Booking Workflow**
-
-```
-User Flow:
-──────────
-1. Browse Movies → Select Movie
-2. Select City → View Available Shows
-3. Select Show → View Seat Layout
-4. Select Seats → Seats LOCKED (10 min timer starts)
-5. Proceed to Payment → Make Payment
-6. Payment Success → Booking CONFIRMED
-7. Seats marked as BOOKED
-
-Failure Scenarios:
-─────────────────
-- Payment timeout → Seats UNLOCKED automatically
-- Payment failure → Seats UNLOCKED, booking CANCELLED
-- Show cancellation → All bookings CANCELLED, refund initiated
-```
-
-
-### 4. **Show Status Rules**
-```
-Status Transitions:
-───────────────────
-ACTIVE → Show is bookable
-CANCELLED → Refunds processed automatically
-COMPLETED → Auto-updated 3 hours after show time
+Response:
+```json
+{
+  "bookingNumber": "BKG-20260613-0001",
+  "status": "PENDING",
+  "totalAmount": 750.0,
+  "seats": ["A1", "A2", "A3"]
+}
 ```
 
 ---
 
-## ⏰ Scheduled Jobs
+### 💳 Payments (`/api-payments`)
 
-### 1. **Seat Lock Cleanup Job**
-```java
-Schedule: Every 5 minutes
-Cron: "0 */5 * * * ?"
-Purpose: Release expired seat locks
-Logic: 
-  - Find seats locked > 10 minutes ago
-  - Set status to AVAILABLE
-  - Clear lockedAt and lockedByUserId
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api-payments` | Make payment for a booking (confirms booking on success) |
+| POST | `/api-payments/{bookingNumber}/cancel` | Cancel payment & process refund |
 
+**Example – Make Payment**
+```http
+POST /api-payments
+Content-Type: application/json
 
-### 2. **Show Status Update Job**
-```java
-Schedule: Every hour
-Cron: "0 0 * * * ?"
-Purpose: Mark completed shows
-Logic:
-  - Find shows with date/time in past
-  - Update status to COMPLETED
+{
+  "bookingNumber": "BKG-20260613-0001",
+  "paymentMethod": "UPI"
+}
 ```
 
 ---
 
-## 🚨 Error Handling
+## ⚙️ Setup & Installation
 
-### Standard Error Response Format
+### Prerequisites
+
+```
+✅ Java 17+
+✅ Maven 3.8+
+✅ MySQL 8.0+
+✅ Gmail account (for email notifications)
+```
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/your-username/Movie-Booking-System.git
+cd Movie-Booking-System/movie-ticket-booking
+```
+
+### Step 2: Create MySQL Database
+
+```sql
+CREATE DATABASE movie_ticket_booking;
+```
+
+### Step 3: Configure `application.properties`
+
+```properties
+spring.application.name=movie-ticket-booking
+
+spring.datasource.url=jdbc:mysql://localhost:3306/movie_ticket_booking
+spring.datasource.username=root
+spring.datasource.password=your_password
+
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+
+server.port=9988
+
+# Seat lock duration in minutes
+app.seat-lock-duration=5
+
+# Gmail SMTP
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-email@gmail.com
+spring.mail.password=your-16-char-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+> **Gmail App Password**: Go to Google Account → Security → 2-Step Verification → App Passwords → Generate a 16-character password.
+
+---
+
+## 🌐 Environment Configuration
+
+| Property | Description | Must Change Before Pushing |
+|----------|-------------|------------------------------|
+| `spring.datasource.username` / `password` | MySQL credentials | ✅ |
+| `spring.mail.username` / `password` | Gmail SMTP credentials (App Password) | ✅ |
+| `app.seat-lock-duration` | Minutes before a locked seat auto-releases | Optional |
+| `server.port` | Application port (default `9988`) | Optional |
+
+---
+
+## ▶ Running the Application
+
+```bash
+# Build
+mvn clean install
+
+# Run
+mvn spring-boot:run
+```
+
+Server starts at: `http://localhost:9988`
+
+---
+
+## ❌ Error Handling
+
+All errors follow this standard format (via `GlobalExceptionHandler`):
 
 ```json
 {
-  "success": false,
-  "message": "Error description",
-  "errors": ["Detailed error 1", "Detailed error 2"],
-  "timestamp": "2024-12-25T10:30:00"
+  "timestamp": "2026-06-13T12:00:00",
+  "status": 404,
+  "error": "NOT_FOUND",
+  "message": "Show not found with id: 10",
+  "path": "/api-shows/10"
 }
 ```
 
-### HTTP Status Codes
-
-| Code | Meaning | Example |
-|------|---------|---------|
-| 200 | Success | Resource retrieved successfully |
-| 201 | Created | Resource created successfully |
-| 400 | Bad Request | Validation error, invalid input |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Duplicate resource, seat already booked |
-| 500 | Server Error | Unexpected server error |
-
-### Custom Exceptions
-
-```java
-ResourceNotFoundException        // 404
-DuplicateResourceException       // 409
-SeatAlreadyBookedException       // 409
-SeatNotAvailableException        // 400
-InvalidBookingException          // 400
-PaymentFailedException           // 400
-ShowFullException               // 400
-InvalidShowTimeException        // 400
-```
+| Exception | HTTP Status | Error Code |
+|-----------|-------------|------------|
+| ResourceNotFoundException | 404 | NOT_FOUND |
+| DuplicateResourceException | 409 | DUPLICATE_RESOURCE |
+| DuplicateRatingException | 409 | DUPLICATE_RATING |
+| InvalidRequestException | 400 | INVALID_REQUEST |
+| InvalidBookingException | 400 | INVALID_BOOKING |
+| SeatAlreadyBookedException | 409 | SEAT_ALREADY_BOOKED |
+| SeatNotAvailableException | 400 | SEAT_NOT_AVAILABLE |
+| ShowSeatAlreadyInitializedException | 409 | SHOW_SEAT_ALREADY_INITIALIZED |
+| PaymentFailedException | 402 | PAYMENT_FAILED |
+| UnauthorizedActionException | 403 | UNAUTHORIZED |
+| BusinessException | 400 | BUSINESS_ERROR |
+| MethodArgumentNotValidException | 400 | VALIDATION_ERROR |
+| Exception (generic) | 500 | INTERNAL_SERVER_ERROR |
 
 ---
 
-## 📊 Performance Optimization
+## ⚠️ Security Note
 
-### Database Indexes
-```sql
--- Recommended indexes for better performance
-CREATE INDEX idx_show_date ON shows(show_date);
-CREATE INDEX idx_show_status ON shows(status);
-CREATE INDEX idx_showseat_status ON show_seats(status);
-CREATE INDEX idx_booking_user ON bookings(user_id);
-CREATE INDEX idx_booking_show ON bookings(show_id);
-CREATE INDEX idx_payment_booking ON payments(booking_id);
-```
+This project currently has **no authentication/authorization layer** (no Spring Security/JWT), and `application.properties` contains a **real Gmail SMTP password**. Before deploying or pushing publicly:
 
-### Caching Strategy
-- Consider adding Redis for:
-  - Movie catalog (rarely changes)
-  - Theatre/screen information
-  - Seat layouts
-  - Show listings
+1. Add Spring Security with JWT-based authentication and role-based access control using the existing `UserRole` enum (`CUSTOMER`, `ADMIN`, `THEATRE_OWNER`) — e.g., restrict movie/show/theatre management to `ADMIN`/`THEATRE_OWNER`, booking/payment actions to `CUSTOMER`.
+2. Move `spring.datasource.password` and `spring.mail.password` to environment variables.
+3. Rotate the Gmail App Password if it has already been committed/pushed.
+4. Add `.gitignore` for `application.properties` and provide an `application.properties.example` template.
 
 ---
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### 1. **Database Connection Failed**
-```
-Error: Communications link failure
-
-Solution:
-- Check MySQL is running
-- Verify database credentials in application.yml
-- Ensure database 'movie_booking_db' exists
-```
-
-#### 2. **Port Already in Use**
-```
-Error: Port 8080 is already in use
-
-Solution:
-- Change port in application.yml
-  server:
-    port: 8081
-```
-
-#### 3. **Seat Lock Not Released**
-```
-Issue: Seats remain locked after 10 minutes
-
-Solution:
-- Check scheduler is enabled (@EnableScheduling)
-- Verify scheduler cron expression
-- Check application logs for errors
-```
-
 ---
-
-## 📈 Future Enhancements
-
-### Planned Features
-
-- [ ] JWT Authentication
-- [ ] Role-Based Access Control (RBAC)
-- [ ] Email Notifications (Booking confirmation)
-- [ ] SMS Notifications (OTP, Alerts)
-- [ ] Payment Gateway Integration (Razorpay, Stripe)
-- [ ] Movie Recommendations (ML-based)
-- [ ] Discount Coupons & Offers
-- [ ] Loyalty Program
-- [ ] Review & Rating System
-- [ ] Social Media Integration
-- [ ] Push Notifications
-- [ ] Admin Dashboard
-- [ ] Analytics & Reports
-- [ ] Multi-language Support
-- [ ] Dark Mode UI
-
----
+ 
